@@ -1,5 +1,7 @@
 # Pipeline de Vendas (Python + SQL)
 
+![testes](https://github.com/hectorkaul/pipeline-vendas/actions/workflows/ci.yml/badge.svg)
+
 Projeto de ETL que junta as vendas de três filiais de uma loja, limpa os dados, carrega num banco SQLite modelado para BI e gera análises em SQL.
 
 O problema que eu quis resolver é bem comum: cada filial exporta a planilha de vendas de um jeito. Uma usa data `03/08/2026`, outra `2026-08-03`, uma usa vírgula decimal, outra ponto, e sempre vem alguma linha duplicada, código digitado errado ou quantidade em branco. Antes de fazer qualquer relatório, alguém precisa arrumar isso. Aqui o script faz essa parte.
@@ -66,6 +68,8 @@ Testes:
 ```bash
 python -m unittest discover -s tests -t .
 ```
+
+Os testes também rodam no GitHub Actions a cada push, em Python 3.10 e 3.12, e no final o pipeline roda de ponta a ponta com dados gerados.
 
 ## Estrutura
 
