@@ -6,12 +6,15 @@ Se estiver sem internet, o pipeline continua normalmente, so sem a marcacao de f
 """
 
 import json
+import logging
 import urllib.error
 import urllib.request
 from datetime import date
 from pathlib import Path
 
 URL = "https://brasilapi.com.br/api/feriados/v1/{ano}"
+
+log = logging.getLogger("pipeline")
 
 
 def buscar_na_api(ano: int, timeout: float = 10) -> list[dict]:
@@ -32,7 +35,7 @@ def feriados_do_ano(ano: int, pasta_cache: Path) -> dict[date, str]:
         try:
             dados = buscar_na_api(ano)
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as erro:
-            print(f"  aviso: nao consegui buscar os feriados de {ano} ({erro}). Seguindo sem eles.")
+            log.warning(f"  aviso: nao consegui buscar os feriados de {ano} ({erro}). Seguindo sem eles.")
             return {}
         pasta_cache.mkdir(parents=True, exist_ok=True)
         cache.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -71,6 +71,20 @@ python -m unittest discover -s tests -t .
 
 Os testes também rodam no GitHub Actions a cada push, em Python 3.10 e 3.12, e no final o pipeline roda de ponta a ponta com dados gerados.
 
+## Rodar todo dia automaticamente
+
+Na prática, um pipeline desses roda sozinho de manhã, antes de alguém abrir o Power BI. Para isso:
+
+- Tudo que aparece na tela também vai para `saida/pipeline.log`, com data e hora. Se der erro no meio da madrugada, o erro completo fica registrado lá.
+- No fim de cada execução é gerado o `saida/resumo_execucao.json` (linhas lidas por filial, válidas, rejeitadas por motivo, período e tempo) e uma linha a mais no `saida/historico_execucoes.csv`. Com o histórico dá para perceber, por exemplo, que uma filial parou de mandar arquivo ou que as rejeições aumentaram de repente.
+- O script `scripts/agendar_windows.ps1` cria a tarefa no Agendador de Tarefas do Windows:
+
+```powershell
+.\scripts\agendar_windows.ps1                  # todo dia às 07:00
+.\scripts\agendar_windows.ps1 -Horario 06:30
+.\scripts\agendar_windows.ps1 -Remover
+```
+
 ## Estrutura
 
 ```
@@ -82,10 +96,15 @@ vendas/
 ├── banco.py         criação das tabelas e carga
 ├── analises.py      consultas SQL
 ├── relatorio.py     CSV + HTML
+├── execucao.py      log em arquivo e resumo de cada execução
 └── sql/schema.sql   modelo estrela
+scripts/
+└── agendar_windows.ps1
 tests/
 ├── test_limpeza.py
-└── test_analises.py
+├── test_analises.py
+├── test_feriados.py  cache e funcionamento sem internet (API simulada com mock)
+└── test_execucao.py
 ```
 
 ## Decisões que tomei
@@ -94,6 +113,7 @@ tests/
 - **Tabela calendário (`dim_data`).** Sem ela, um dia sem nenhuma venda simplesmente não existiria na consulta e a média por dia da semana sairia maior do que é de verdade.
 - **Duplicidade por filial + número da venda + produto.** O mesmo número de venda pode existir em filiais diferentes, então não basta olhar só o número.
 - **Nada é descartado em silêncio.** Toda linha recusada fica registrada com o motivo, porque em dado real alguém vai querer saber o que ficou de fora.
+- **API externa nunca derruba o pipeline.** Se a BrasilAPI estiver fora do ar, o pipeline segue sem os feriados e registra um aviso no log. Nos testes a API é simulada com `unittest.mock`, então eles não dependem de internet.
 
 ## Power BI
 
@@ -103,4 +123,4 @@ Os CSVs da pasta `saida/` já saem com `;` e vírgula decimal, então importam d
 
 - [ ] Dashboard no Power BI em cima do `vendas.db`
 - [ ] Ler direto de uma API do ERP em vez de CSV
-- [ ] Rodar o pipeline agendado (todo dia de manhã)
+- [x] Rodar o pipeline agendado (todo dia de manhã)
